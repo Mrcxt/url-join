@@ -4,6 +4,16 @@
 export type UrlSegment = string | number | null | undefined
 
 /**
+ * Query parameter value type
+ */
+export type QueryValue = string | number | boolean | null | undefined
+
+/**
+ * Query parameters object
+ */
+export type QueryParams = Record<string, QueryValue | QueryValue[]>
+
+/**
  * Options for URL joining
  */
 export interface UrlJoinOptions {
@@ -11,6 +21,8 @@ export interface UrlJoinOptions {
   trailingSlash?: boolean
   /** Whether to normalize multiple slashes to single slash */
   normalize?: boolean
+  /** Query parameters to append to the URL */
+  query?: QueryParams
 }
 
 /**
@@ -41,6 +53,46 @@ function normalizeSlashes(url: string): string {
 }
 
 /**
+ * Converts query parameters to URL search string
+ */
+function stringifyQuery(query: QueryParams): string {
+  const params: string[] = []
+  
+  for (const [key, value] of Object.entries(query)) {
+    if (value === null || value === undefined) {
+      continue
+    }
+    
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item !== null && item !== undefined) {
+          params.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(item))}`)
+        }
+      }
+    } else {
+      params.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+    }
+  }
+  
+  return params.length > 0 ? `?${params.join('&')}` : ''
+}
+
+/**
+ * Extracts existing query string from URL
+ */
+function extractQuery(url: string): { path: string; query: string } {
+  const queryIndex = url.indexOf('?')
+  if (queryIndex === -1) {
+    return { path: url, query: '' }
+  }
+  
+  return {
+    path: url.slice(0, queryIndex),
+    query: url.slice(queryIndex)
+  }
+}
+
+/**
  * Joins URL segments together, filtering out null/undefined values
  * 
  * @param segments - URL segments to join
@@ -57,6 +109,12 @@ function normalizeSlashes(url: string): string {
  * 
  * urlJoin('/api/', '/users/', { trailingSlash: true })
  * // => '/api/users/'
+ * 
+ * urlJoin('api', 'users', { query: { page: 1, limit: 10 } })
+ * // => 'api/users?page=1&limit=10'
+ * 
+ * urlJoin('api/users?sort=name', { query: { page: 1 } })
+ * // => 'api/users?sort=name&page=1'
  * ```
  */
 export function urlJoin(...args: UrlSegment[]): string
@@ -87,8 +145,18 @@ export function urlJoin(...args: UrlSegment[] | [...UrlSegment[], UrlJoinOptions
     return ''
   }
   
+  // Extract query strings from segments and clean them
+  let existingQuery = ''
+  const cleanedSegments = validSegments.map((segment) => {
+    const { path, query } = extractQuery(segment)
+    if (query && !existingQuery) {
+      existingQuery = query
+    }
+    return path
+  })
+  
   // Join segments with '/'
-  let result = validSegments.join('/')
+  let result = cleanedSegments.join('/')
   
   // Handle protocol preservation and leading slash
   const firstSegment = String(segments.find(isValidSegment) || '')
@@ -98,8 +166,9 @@ export function urlJoin(...args: UrlSegment[] | [...UrlSegment[], UrlJoinOptions
     if (protocolMatch) {
       const protocol = protocolMatch[0]
       const restOfFirst = firstSegment.slice(protocol.length)
-      const normalizedFirst = normalizeSegment(restOfFirst)
-      result = protocol + [normalizedFirst, ...validSegments.slice(1)].join('/')
+      const { path: cleanPath } = extractQuery(restOfFirst)
+      const normalizedFirst = normalizeSegment(cleanPath)
+      result = protocol + [normalizedFirst, ...cleanedSegments.slice(1)].join('/')
     }
   } else if (firstSegment.startsWith('/')) {
     result = '/' + result
@@ -117,7 +186,21 @@ export function urlJoin(...args: UrlSegment[] | [...UrlSegment[], UrlJoinOptions
     result = result.slice(0, -1)
   }
   
-  return result
+  // Handle query parameters
+  let finalQuery = existingQuery
+  if (options.query) {
+    const newQuery = stringifyQuery(options.query)
+    if (newQuery) {
+      if (existingQuery) {
+        // Merge existing query with new query
+        finalQuery = existingQuery + '&' + newQuery.slice(1)
+      } else {
+        finalQuery = newQuery
+      }
+    }
+  }
+  
+  return result + finalQuery
 }
 
 /**

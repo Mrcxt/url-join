@@ -7,8 +7,9 @@ A TypeScript utility for joining URL segments with automatic filtering of null/u
 - 🚀 **TypeScript First**: Written in TypeScript with full type support
 - 🧹 **Auto Filtering**: Automatically filters out `null`, `undefined`, and empty string values
 - 🔧 **Flexible**: Supports strings, numbers, and mixed types
-- ⚙️ **Configurable**: Options for trailing slashes and normalization
+- ⚙️ **Configurable**: Options for trailing slashes, normalization, and query parameters
 - 🛡️ **Protocol Safe**: Preserves URL protocols (http://, https://, etc.)
+- 🔍 **Query Support**: Built-in query parameter handling with automatic encoding
 - 📦 **Zero Dependencies**: No external dependencies
 - 🌳 **Tree Shakable**: ESM and CJS builds with tree shaking support
 
@@ -60,6 +61,18 @@ urlJoin('api', 'users', { trailingSlash: true })
 urlJoin('api//users', { normalize: false })
 // => 'api//users'
 
+// With query parameters
+urlJoin('api', 'users', { query: { page: 1, limit: 10 } })
+// => 'api/users?page=1&limit=10'
+
+// Query with different types
+urlJoin('api', 'search', { query: { q: 'hello world', active: true, tags: ['js', 'ts'] } })
+// => 'api/search?q=hello%20world&active=true&tags=js&tags=ts'
+
+// Merge with existing query
+urlJoin('api/users?sort=name', { query: { page: 1 } })
+// => 'api/users?sort=name&page=1'
+
 // Complex example
 urlJoin(
   'https://api.example.com/',
@@ -69,9 +82,9 @@ urlJoin(
   123,
   undefined,
   '/profile',
-  { trailingSlash: true }
+  { trailingSlash: true, query: { include: 'avatar' } }
 )
-// => 'https://api.example.com/v1/users/123/profile/'
+// => 'https://api.example.com/v1/users/123/profile/?include=avatar'
 ```
 
 ### Default Export
@@ -94,6 +107,14 @@ Joins URL segments together, filtering out null/undefined values.
 - `segments`: `UrlSegment[]` - URL segments to join (string, number, null, or undefined)
 - `options`: `UrlJoinOptions` - Optional configuration
 
+#### Types
+
+```typescript
+type UrlSegment = string | number | null | undefined
+type QueryValue = string | number | boolean | null | undefined
+type QueryParams = Record<string, QueryValue | QueryValue[]>
+```
+
 #### Options
 
 ```typescript
@@ -102,6 +123,8 @@ interface UrlJoinOptions {
   trailingSlash?: boolean
   /** Whether to normalize multiple slashes to single slash (default: true) */
   normalize?: boolean
+  /** Query parameters to append to the URL */
+  query?: QueryParams
 }
 ```
 
@@ -143,6 +166,34 @@ const absolutePath = urlJoin('/var', 'www', 'html', 'index.html')
 // => '/var/www/html/index.html'
 ```
 
+### Query Parameters
+
+```typescript
+// Basic query parameters
+const searchUrl = urlJoin('api', 'search', { query: { q: 'typescript', page: 1 } })
+// => 'api/search?q=typescript&page=1'
+
+// Array values
+const filterUrl = urlJoin('api', 'products', { query: { tags: ['electronics', 'mobile'] } })
+// => 'api/products?tags=electronics&tags=mobile'
+
+// Mixed types with null filtering
+const complexUrl = urlJoin('api', 'users', {
+  query: {
+    active: true,
+    role: 'admin',
+    department: null, // will be filtered out
+    permissions: ['read', 'write']
+  }
+})
+// => 'api/users?active=true&role=admin&permissions=read&permissions=write'
+
+// Merging with existing query
+const existingQuery = 'api/search?sort=date'
+const mergedUrl = urlJoin(existingQuery, { query: { page: 2, limit: 20 } })
+// => 'api/search?sort=date&page=2&limit=20'
+```
+
 ## Comparison with Other Libraries
 
 | Feature | @anys/url-join | url-join | proper-url-join |
@@ -150,6 +201,9 @@ const absolutePath = urlJoin('/var', 'www', 'html', 'index.html')
 | TypeScript | ✅ | ❌ | ❌ |
 | Auto filter null/undefined | ✅ | ❌ | ✅ |
 | Protocol preservation | ✅ | ✅ | ✅ |
+| Query parameter support | ✅ | ❌ | ❌ |
+| Query encoding | ✅ | ❌ | ❌ |
+| Query merging | ✅ | ❌ | ❌ |
 | Configurable options | ✅ | ❌ | ✅ |
 | Zero dependencies | ✅ | ✅ | ✅ |
 | Tree shakable | ✅ | ❌ | ✅ |

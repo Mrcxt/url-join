@@ -81,4 +81,33 @@ describe('urlJoin', () => {
     const { default: defaultUrlJoin } = await import('./index')
     expect(defaultUrlJoin('api', 'users')).toBe('api/users')
   })
+
+  it('should handle query parameters', () => {
+    expect(urlJoin('api', 'users', { query: { page: 1, limit: 10 } })).toBe('api/users?page=1&limit=10')
+    expect(urlJoin('https://api.example.com', 'users', { query: { id: 123 } })).toBe('https://api.example.com/users?id=123')
+  })
+
+  it('should handle query parameters with different types', () => {
+    expect(urlJoin('api', { query: { active: true, count: 0, name: 'test' } })).toBe('api?active=true&count=0&name=test')
+    expect(urlJoin('api', { query: { tags: ['js', 'ts'] } })).toBe('api?tags=js&tags=ts')
+  })
+
+  it('should filter null/undefined query values', () => {
+    expect(urlJoin('api', { query: { page: 1, filter: null, sort: undefined, active: true } })).toBe('api?page=1&active=true')
+    expect(urlJoin('api', { query: { tags: ['js', null, 'ts', undefined] } })).toBe('api?tags=js&tags=ts')
+  })
+
+  it('should merge existing query with new query', () => {
+    expect(urlJoin('api/users?sort=name', { query: { page: 1 } })).toBe('api/users?sort=name&page=1')
+    expect(urlJoin('api/users?sort=name&active=true', { query: { page: 1, limit: 10 } })).toBe('api/users?sort=name&active=true&page=1&limit=10')
+  })
+
+  it('should handle query with trailing slash option', () => {
+    expect(urlJoin('api', 'users', { query: { page: 1 }, trailingSlash: true })).toBe('api/users/?page=1')
+    expect(urlJoin('api', 'users/', { query: { page: 1 }, trailingSlash: false })).toBe('api/users?page=1')
+  })
+
+  it('should encode query parameters', () => {
+    expect(urlJoin('api', { query: { search: 'hello world', 'special chars': '!@#$%' } })).toBe('api?search=hello%20world&special%20chars=!%40%23%24%25')
+  })
 })
