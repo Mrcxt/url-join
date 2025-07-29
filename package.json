@@ -1,6 +1,6 @@
 {
   "name": "@anys/url-join",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A TypeScript utility for joining URL segments with automatic filtering of null/undefined values",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
