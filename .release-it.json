@@ -1,0 +1,20 @@
+{
+  "git": {
+    "commitMessage": "chore: release v${version}",
+    "tagName": "v${version}",
+    "requireCleanWorkingDir": true,
+    "requireBranch": "main"
+  },
+  "npm": {
+    "publish": true,
+    "publishPath": "."
+  },
+  "github": {
+    "release": true,
+    "releaseName": "Release v${version}"
+  },
+  "hooks": {
+    "before:init": ["pnpm lint", "pnpm type-check", "pnpm test"],
+    "after:bump": "pnpm build"
+  }
+}

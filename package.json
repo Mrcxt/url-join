@@ -1,0 +1,60 @@
+{
+  "name": "@anys/url-join",
+  "version": "1.0.0",
+  "description": "A TypeScript utility for joining URL segments with automatic filtering of null/undefined values",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit",
+    "prepublishOnly": "pnpm build",
+    "release": "release-it"
+  },
+  "keywords": [
+    "url",
+    "join",
+    "typescript",
+    "utility",
+    "path"
+  ],
+  "author": "anys",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "release-it": "^16.0.0",
+    "tsup": "^7.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^0.34.0",
+    "@vitest/coverage-v8": "^0.34.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anys/url-join.git"
+  },
+  "bugs": {
+    "url": "https://github.com/anys/url-join/issues"
+  },
+  "homepage": "https://github.com/anys/url-join#readme",
+  "publishConfig": {
+    "access": "public"
+  }
+}
